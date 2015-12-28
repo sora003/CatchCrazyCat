@@ -13,6 +13,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
 
+import java.util.HashMap;
 import java.util.Vector;
 
 /**
@@ -20,6 +21,7 @@ import java.util.Vector;
  */
 public class Playground extends SurfaceView{
 
+    //每个单元的边距
     private static int WIDTH = 50;
     private static final int ROW = 10;
     private static final int COL = 10;
@@ -30,6 +32,7 @@ public class Playground extends SurfaceView{
 
     private Dot matrix[][];
     private Dot cat;
+    private int steps;
 
     public Playground(Context context) {
         super(context);
@@ -116,6 +119,8 @@ public class Playground extends SurfaceView{
                 matrix[i][j].setStatus(Dot.STATUS_OFF);
             }
         }
+        //步数初始化
+        steps = 0;
         //设置猫的位置
         cat = new Dot(initX,initY);
         getDot(initX,initY).setStatus(Dot.STATUS_IN);
@@ -190,6 +195,10 @@ public class Playground extends SurfaceView{
     //方向计量方法与getNeighbour相同
     private int getDistance(Dot dot,int dir){
         int distance = 0;
+        //当点在边界时 返回距离值为0 防止数组越界报错
+        if (isAtEdge(dot)){
+            return 1;
+        }
         //设置参考点d
         Dot d = dot;
         //沿指定方向移动的下一个单元
@@ -199,12 +208,12 @@ public class Playground extends SurfaceView{
             //遇到不可走的单元返回值
             //返回负值
             if (next.getStatus() == Dot.STATUS_ON){
-                distance++;
                 return distance*-1;
             }
             //遇到游戏边界
             //返回正值
             if (isAtEdge(next)){
+                distance++;
                 return distance;
             }
             distance++;
@@ -229,24 +238,70 @@ public class Playground extends SurfaceView{
             lose();
             return;
         }
-        //存储猫周围可走的单元
+        //记录猫周围可走的单元
         Vector<Dot> available = new Vector<>();
+        //记录可以直接到达边界的路径方向
+        Vector<Dot> positive = new Vector<>();
+        //记录方向
+        HashMap<Dot,Integer> direction = new HashMap<Dot,Integer>();
         //判断猫周围的单元是否可走
         for (int i=1;i<=6;i++){
-            Dot n = getNeighbour(cat,i);
+            Dot d = getNeighbour(cat,i);
             //如果有可走的单元 添加进Vector
-            if (n.getStatus() == Dot.STATUS_OFF){
-                available.add(n);
+            if (d.getStatus() == Dot.STATUS_OFF){
+                available.add(d);
+                //更新HashMap
+                direction.put(d, i);
+                if (getDistance(d,i)>0){
+                    positive.add(d);
+                    //传入当前单元所对应的方向
+                }
             }
         }
         //如果没有可走单元 游戏结束 胜利
         if (available.size() == 0){
+            steps++;
             win();
         }
-        //
-        else {
+        //只有一种可移动方向 向该方向移动
+        else if (available.size() == 1) {
             moveTo(available.get(0));
         }
+        //多余一种选择时  采取高级移动策略
+        else {
+            //记录最佳移动向单元
+            Dot best = null;
+            //存在课可以直接到达游戏边界的路径
+            if (positive.size()!=0){
+                //记录可以到达边界的最短距离
+                int min = 9999;
+                for (int i=0;i<positive.size();i++){
+                    int length = getDistance(positive.get(i), direction.get(positive.get(i)));
+//                    System.out.println("方向"+direction.get(positive.get(i))+":"+length);
+                    if (length<min){
+                        min = length;
+                        best = positive.get(i);
+                    }
+                }
+//                System.out.println("**********");
+            }
+            //所有方向都存在路障
+            else {
+                //取移动空间最大的
+                int max = 1;
+                for (int i=0;i<available.size();i++){
+                    int length = getDistance(available.get(i), direction.get(available.get(i)));
+//                    System.out.println("方向"+direction.get(available.get(i))+":"+length);
+                    if (length<max){
+                        max = length;
+                        best = available.get(i);
+                    }
+                }
+//                System.out.println("**********");
+            }
+            moveTo(best);
+        }
+        steps++;
     }
 
     private void lose(){
@@ -255,6 +310,7 @@ public class Playground extends SurfaceView{
 
     private void win(){
         Toast.makeText(getContext(),"You Win!",Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(),"总计"+steps+"步",Toast.LENGTH_SHORT).show();
     }
 
     //触摸事件监听
