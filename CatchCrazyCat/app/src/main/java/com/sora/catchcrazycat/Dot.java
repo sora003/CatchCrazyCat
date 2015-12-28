@@ -12,7 +12,7 @@ public class Dot {
     //可以通过
     public static final int STATUS_ON = 1;
     //已通过 不可再走
-    public static final int STATUS_OFF = 1;
+    public static final int STATUS_OFF = 0;
     //当前所在位置
     public static final int STATUS_IN = -1;
 
