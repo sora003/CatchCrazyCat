@@ -7,8 +7,10 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.inputmethodservice.Keyboard;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.Toast;
 
 /**
@@ -36,6 +38,12 @@ public class Playground extends SurfaceView{
                 matrix[i][j] = new Dot(j,i);
             }
         }
+        setOnTouchListener(new DotOnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return super.onTouch(v, event);
+            }
+        });
         //初始化游戏元素
         initGame();
     }
@@ -126,5 +134,36 @@ public class Playground extends SurfaceView{
     //根据坐标获取Dot对象
     private Dot getDot(int x,int  y){
         return matrix[y][x];
+    }
+
+    //触摸事件监听
+    private class DotOnTouchListener implements OnTouchListener {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+           if (event.getAction() == MotionEvent.ACTION_UP){
+//               Toast.makeText(getContext(),event.getX()+":"+event.getY(),Toast.LENGTH_SHORT).show();
+               //转化为Dot下坐标
+               int x,y;
+               y = (int) (event.getY()/WIDTH);
+               if (y%2 == 0){
+                   x = (int) (event.getX()/WIDTH);
+               }
+               else {
+                   x = (int) ((event.getX()-WIDTH/2)/WIDTH);
+               }
+               //保护数组防止越界
+               //在游戏主界面外点击将初始化游戏
+               if (x+1>COL || y+1>ROW){
+                   initGame();
+//                   return true;
+               }
+               else {
+                   //点击后处于不可走状态
+                   getDot(x,y).setStatus(Dot.STATUS_ON);
+               }
+               redraw();
+           }
+            return true;
+        }
     }
 }
