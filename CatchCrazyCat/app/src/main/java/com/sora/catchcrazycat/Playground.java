@@ -136,6 +136,90 @@ public class Playground extends SurfaceView{
         return matrix[y][x];
     }
 
+    //判断是否处于游戏边界
+    private boolean isAtEdge(Dot dot){
+        if (dot.getX()*getY() == 0 || dot.getX()+1 == COL || dot.getY()+1 ==ROW){
+            return true;
+        }
+        return false;
+    }
+
+    //获取Dot的邻接单元
+    //从邻接左元素顺时针定义顺序1 2 3 4 5 6
+    private Dot getNeighbour(Dot dot,int dir){
+        switch (dir){
+            case 1:
+                return getDot(dot.getX() - 1, dot.getY());
+            case 2:
+                if (dot.getY()%2 == 0){
+                    return getDot(dot.getX() - 1, dot.getY() - 1);
+                }
+                else {
+                    return getDot(dot.getX(), dot.getY() - 1);
+                }
+            case 3:
+                if (dot.getY()%2 == 0){
+                    return getDot(dot.getX(), dot.getY() - 1);
+                }
+                else {
+                    return getDot(dot.getX() + 1, dot.getY() - 1);
+                }
+            case 4:
+                return getDot(dot.getX() + 1,dot.getY());
+            case 5:
+                if (dot.getY()%2 == 0){
+                    return getDot(dot.getX(), dot.getY() + 1);
+                }
+                else {
+                    return getDot(dot.getX() + 1, dot.getY() + 1);
+                }
+            case 6:
+                if (dot.getY()%2 == 0){
+                    return getDot(dot.getX() - 1, dot.getY() + 1);
+                }
+                else {
+                    return getDot(dot.getX(), dot.getY() + 1);
+                }
+        }
+        return null;
+    }
+
+    //返回不同方向可走长度
+    //方向计量方法与getNeighbour相同
+    private int getDistance(Dot dot,int dir){
+        int distance = 0;
+        //设置参考点d
+        Dot d = dot;
+        //沿指定方向移动的下一个单元
+        Dot next;
+        while (true){
+            next = getNeighbour(d,dir);
+            //遇到不可走的单元返回值
+            //返回负值
+            if (next.getStatus() == Dot.STATUS_ON){
+                distance++;
+                return distance*-1;
+            }
+            //遇到游戏边界
+            //返回正值
+            if (isAtEdge(next)){
+                return distance;
+            }
+            distance++;
+            d = next;
+        }
+    }
+
+    //猫的移动
+    private void moveTo(Dot dot){
+        //设置当前单元为猫所在位置
+        dot.setStatus(Dot.STATUS_IN);
+        //设置猫未移动时的位置状态为可走
+        getDot(cat.getX(),cat.getY()).setStatus(Dot.STATUS_OFF);
+        //更新猫所在的坐标
+        cat.setXY(dot.getX(),dot.getY());
+    }
+
     //触摸事件监听
     private class DotOnTouchListener implements OnTouchListener {
         @Override
@@ -154,8 +238,7 @@ public class Playground extends SurfaceView{
                //保护数组防止越界
                //在游戏主界面外点击将初始化游戏
                if (x+1>COL || y+1>ROW){
-                   initGame();
-//                   return true;
+                 initGame();
                }
                else {
                    //点击后处于不可走状态
