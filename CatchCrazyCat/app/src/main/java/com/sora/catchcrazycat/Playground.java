@@ -13,6 +13,8 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
 
+import java.util.Vector;
+
 /**
  * Created by Sora on 2015/12/28.
  */
@@ -138,7 +140,7 @@ public class Playground extends SurfaceView{
 
     //判断是否处于游戏边界
     private boolean isAtEdge(Dot dot){
-        if (dot.getX()*getY() == 0 || dot.getX()+1 == COL || dot.getY()+1 ==ROW){
+        if (dot.getX()*dot.getY() == 0 || dot.getX()+1 == COL || dot.getY()+1 ==ROW){
             return true;
         }
         return false;
@@ -210,7 +212,7 @@ public class Playground extends SurfaceView{
         }
     }
 
-    //猫的移动
+    //猫的位置变化
     private void moveTo(Dot dot){
         //设置当前单元为猫所在位置
         dot.setStatus(Dot.STATUS_IN);
@@ -218,6 +220,41 @@ public class Playground extends SurfaceView{
         getDot(cat.getX(),cat.getY()).setStatus(Dot.STATUS_OFF);
         //更新猫所在的坐标
         cat.setXY(dot.getX(),dot.getY());
+    }
+
+    //实现猫的移动
+    private void move(){
+        //判断场景边界 如果猫在边界 游戏结束 失败
+        if (isAtEdge(cat)){
+            lose();
+            return;
+        }
+        //存储猫周围可走的单元
+        Vector<Dot> available = new Vector<>();
+        //判断猫周围的单元是否可走
+        for (int i=1;i<=6;i++){
+            Dot n = getNeighbour(cat,i);
+            //如果有可走的单元 添加进Vector
+            if (n.getStatus() == Dot.STATUS_OFF){
+                available.add(n);
+            }
+        }
+        //如果没有可走单元 游戏结束 胜利
+        if (available.size() == 0){
+            win();
+        }
+        //
+        else {
+            moveTo(available.get(0));
+        }
+    }
+
+    private void lose(){
+        Toast.makeText(getContext(),"You Lose!",Toast.LENGTH_SHORT).show();
+    }
+
+    private void win(){
+        Toast.makeText(getContext(),"You Win!",Toast.LENGTH_SHORT).show();
     }
 
     //触摸事件监听
@@ -240,9 +277,11 @@ public class Playground extends SurfaceView{
                if (x+1>COL || y+1>ROW){
                  initGame();
                }
-               else {
+               //当当前点击点处于可走状态时才可以行动
+               else if (getDot(x,y).getStatus() == Dot.STATUS_OFF){
                    //点击后处于不可走状态
                    getDot(x,y).setStatus(Dot.STATUS_ON);
+                   move();
                }
                redraw();
            }
