@@ -9,9 +9,9 @@ public class Dot {
     //状态
     int status;
 
-    //可以通过
+    //不可走
     public static final int STATUS_ON = 1;
-    //已通过 不可再走
+    //可走
     public static final int STATUS_OFF = 0;
     //当前所在位置
     public static final int STATUS_IN = -1;
@@ -20,7 +20,7 @@ public class Dot {
         super();
         this.x = x;
         this.y = y;
-        //创建后处于不可走状态
+        //创建后处于可走状态
         status = STATUS_OFF;
     }
 
